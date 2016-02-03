@@ -1,10 +1,15 @@
+// Dependencies for plotly and arduino
 var serialport = require('serialport'),
-    plotly = require('plotly')('your_username','your_api_key'),
-    token = 'your_token';
+    plotly = require('plotly')('Fortiz2305','4qmx1cw8kh'),
+    token = '7y17e8gl1n';
 
-// You have to change this with your port name
-var portName = '/dev/cu.wchusbserial1410'; 
-var sp = new serialport.SerialPort(portName,{
+// require/import the mongodb native drivers
+var mongodb = require('mongodb');
+var assert = require('assert');
+
+// Port information
+var portName = '/dev/cu.wchusbserial1410';
+var sp = new serialport.SerialPort(portName, {
     baudRate: 9600,
     dataBits: 8,
     parity: 'none',
@@ -13,6 +18,14 @@ var sp = new serialport.SerialPort(portName,{
     parser: serialport.parsers.readline("\r\n")
 });
 
+// We need to work with "MongoClient" interface in order to connect to a mongodb server
+var MongoClient = mongodb.MongoClient;
+
+//Connection URL. This is where mongodb server is running.
+var url = 'mongodb://localhost:27017/TrabajoSistemasEmpotrados';
+
+
+// helper function to get a nicely formatted date string
 function getDateString() {
     var time = new Date().getTime();
     var datestr = new Date(time +3600000).toISOString().replace(/T/, ' ').replace(/Z/, '');
@@ -20,16 +33,18 @@ function getDateString() {
 }
 
 var initdata = [{x:[], y:[], stream:{token:token, maxpoints: 500}}];
-var initlayout = {fileopt : "extend", filename : "Sensor-Statistics"};
+var initlayout = {fileopt : "extend", filename : "sensor-test"};
 
-console.log('**************************************************************\n\
-Welcome to the Light Sensor! =).\n\
-You can check your statistics visiting https://plot.ly/\n\
-*************************************************************');
+console.log('**********************************************************************************************************\n\
+BIENVENIDO AL TRABAJO DE LA ASIGNATURA SERVICIOS EN MOVILIDAD Y SISTEMAS EMPOTRADOS.\n\
+ESTE TRABAJO RECOGE LAS ESTADÍSTICAS DE LA LUZ QUE RECIBE UN SENSOR DE LUZ SITUADO EN UNA PLACA ARDUINO.\n\
+PARA VER DICHOS RESULTADOS VISITE https://plot.ly/\n\
+***********************************************************************************************************');
  
 plotly.plot(initdata, initlayout, function (err, msg) {
     if (err) return console.log(err)
 
+    // Create a plotly stream. We can connect to the API with our token
     console.log(msg);
     var stream = plotly.stream(token, function (err, res) {
         console.log(err, res);
@@ -38,7 +53,34 @@ plotly.plot(initdata, initlayout, function (err, msg) {
     sp.on('data', function(input) {
         if(isNaN(input) || input > 1023) return;
 
+    // Convert to JSON
     var streamObject = JSON.stringify({ x : getDateString(), y : input });
+    
+    // Use connect method to connect to the Server 
+    MongoClient.connect(url, function (err, db) {
+        if (err) {
+            console.log('Unable to connect to the mongoDB server. Error:', err);
+        } else {
+            console.log('Connection established to', url);
+            assert.equal(null, err)
+            insertValue(db, function() {
+                db.close();
+            })
+        }
+	})
+    
+    var insertValue = function(db, callback) {
+        db.collection('LightValues').insertOne( {
+		streamObject,
+		"object_id" : "4dddw"
+	}, function(err, result) {
+        console.log("Inserted value")
+        assert.equal(err, null)
+        callback(result)
+        })
+    }
+
+    console.log(streamObject);
     stream.write(streamObject+'\n');
     });
 });
