@@ -1,7 +1,7 @@
 // Dependencies for plotly and arduino
 var serialport = require('serialport'),
-    plotly = require('plotly')('Fortiz2305','4qmx1cw8kh'),
-    token = '7y17e8gl1n';
+    plotly = require('plotly')('yourPlotlyUsername','yourAPI-key'),
+    token = 'YourToken';
 
 // require/import the mongodb native drivers
 var mongodb = require('mongodb');
