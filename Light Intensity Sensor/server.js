@@ -8,7 +8,7 @@ var mongodb = require('mongodb');
 var assert = require('assert');
 
 // Port information
-var portName = '/dev/cu.wchusbserial1410';
+var portName = '/path/to/your/port';
 var sp = new serialport.SerialPort(portName, {
     baudRate: 9600,
     dataBits: 8,
@@ -22,7 +22,7 @@ var sp = new serialport.SerialPort(portName, {
 var MongoClient = mongodb.MongoClient;
 
 //Connection URL. This is where mongodb server is running.
-var url = 'mongodb://localhost:27017/TrabajoSistemasEmpotrados';
+var url = 'mongodb://localhost:27017/sample';
 
 
 // helper function to get a nicely formatted date string
@@ -36,11 +36,10 @@ var initdata = [{x:[], y:[], stream:{token:token, maxpoints: 500}}];
 var initlayout = {fileopt : "extend", filename : "sensor-test"};
 
 console.log('**********************************************************************************************************\n\
-BIENVENIDO AL TRABAJO DE LA ASIGNATURA SERVICIOS EN MOVILIDAD Y SISTEMAS EMPOTRADOS.\n\
-ESTE TRABAJO RECOGE LAS ESTADÍSTICAS DE LA LUZ QUE RECIBE UN SENSOR DE LUZ SITUADO EN UNA PLACA ARDUINO.\n\
-PARA VER DICHOS RESULTADOS VISITE https://plot.ly/\n\
+TAKING RESULTS....\n\
+YOU CAN CHECK IT IN https://plot.ly/\n\
 ***********************************************************************************************************');
- 
+
 plotly.plot(initdata, initlayout, function (err, msg) {
     if (err) return console.log(err)
 
@@ -55,8 +54,8 @@ plotly.plot(initdata, initlayout, function (err, msg) {
 
     // Convert to JSON
     var streamObject = JSON.stringify({ x : getDateString(), y : input });
-    
-    // Use connect method to connect to the Server 
+
+    // Use connect method to connect to the Server
     MongoClient.connect(url, function (err, db) {
         if (err) {
             console.log('Unable to connect to the mongoDB server. Error:', err);
@@ -68,7 +67,7 @@ plotly.plot(initdata, initlayout, function (err, msg) {
             })
         }
 	})
-    
+
     var insertValue = function(db, callback) {
         db.collection('LightValues').insertOne( {
 		streamObject,
